@@ -17,10 +17,13 @@ class Book(db.Model):
 
 db.create_all()
 
-all_books = []
+
 
 @app.route('/')
 def home():
+    all_books = []
+    for i in db.session.query(Book).all():
+        all_books.append({'title': i.title, 'author': i.author, 'rating': i.rating})
     return render_template("index.html", books=all_books)
 
 
@@ -28,12 +31,21 @@ def home():
 def add():
     if request.method == 'GET':
         return render_template("add.html")
-    new_book = Book(title=request.form['name'], author=request.form['author'], rating=request.form['rating'])
+    new_book = Book(title=request.form['title'], author=request.form['author'], rating=request.form['rating'])
     db.session.add(new_book)
     db.session.commit()
     return redirect(url_for('home'))
 
-
+@app.route("/edit/<title>-<rating>", methods=['POST', 'GET'])
+def edit(title, rating):
+    print("title")
+    if request.method == 'POST':
+        Book.query.filter_by(title=title).first().rating = request.form['rating']
+        print(title)
+        db.session.commit()
+        print(rating)
+        return redirect(url_for('home'))
+    return render_template("edit.html", title=title, rating=rating)
 
 
 if __name__ == "__main__":
